@@ -29,10 +29,14 @@ def main() -> None:
 
     client = anthropic.Anthropic()
     results = []
+    spent = [0, 0]
     for attack in attacks:
         for config in configs:
             rs = [run_one(attack, config, client, args.model, t) for t in range(args.trials)]
             results.extend(rs)
+            for r in rs:
+                spent[0] += r.tokens[0]
+                spent[1] += r.tokens[1]
             wins = sum(r.success for r in rs)
             fresh = sum(not r.cached for r in rs)
             print(f"{attack.id:28} {config.name:10} {wins}/{len(rs)}   ({fresh} new calls)")
@@ -40,6 +44,7 @@ def main() -> None:
     RUNS_DIR.mkdir(exist_ok=True)
     out = RUNS_DIR / f"{time.strftime('%Y%m%d-%H%M%S')}.json"
     out.write_text(json.dumps([asdict(r) for r in results], indent=1))
+    print(f"tokens this run: {spent[0]:,} in, {spent[1]:,} out")
     print(f"saved {out}")
 
 

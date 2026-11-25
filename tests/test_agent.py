@@ -75,3 +75,14 @@ def test_thinking_blocks_are_sent_back_unchanged():
     TradingAgent(make_world(), client=client).send("price?")
     sent = client.requests[1]["messages"][1]["content"][0]
     assert sent == {"type": "thinking", "thinking": "", "signature": "sig123"}
+
+
+def test_tokens_are_summed_across_calls():
+    from types import SimpleNamespace as NS
+    a = tool_reply("get_price", {"symbol": "BTC"})
+    a.usage = NS(input_tokens=100, output_tokens=10)
+    b = text_reply("ok")
+    b.usage = NS(input_tokens=150, output_tokens=5)
+    agent = TradingAgent(make_world(), client=FakeClient([a, b]))
+    agent.send("price?")
+    assert agent.tokens == [250, 15]

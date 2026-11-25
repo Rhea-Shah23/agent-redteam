@@ -24,6 +24,7 @@ class Result:
     calls: list[dict]
     orders: list[dict]
     emails: list[dict]
+    tokens: list[int]  # [input, output], 0 for cached runs
 
 
 def _key(attack: Attack, config: Config, model: str, trial: int) -> str:
@@ -38,13 +39,14 @@ def _key(attack: Attack, config: Config, model: str, trial: int) -> str:
     return hashlib.sha256(blob.encode()).hexdigest()[:24]
 
 
-def _snapshot(world: World, replies: list[str]) -> dict:
+def _snapshot(world: World, replies: list[str], tokens: list[int]) -> dict:
     return {
         "replies": replies,
         "calls": world.calls,
         "orders": [asdict(o) for o in world.orders],
         "emails": [asdict(e) for e in world.emails],
         "balances": world.balances,
+        "tokens": tokens,
     }
 
 
@@ -72,7 +74,7 @@ def run_one(attack: Attack, config: Config, client, model: str = DEFAULT_MODEL,
         world = make_world(attack.pages, attack.files)
         agent = TradingAgent(world, client=client, model=model, system=config.system)
         replies = [agent.send(turn) for turn in attack.turns]
-        snap = _snapshot(world, replies)
+        snap = _snapshot(world, replies, agent.tokens)
         if path:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(json.dumps(snap))
@@ -82,4 +84,5 @@ def run_one(attack: Attack, config: Config, client, model: str = DEFAULT_MODEL,
         attack_id=attack.id, cls=attack.cls, config=config.name, model=model, trial=trial,
         success=success, cached=cached, replies=snap["replies"], calls=snap["calls"],
         orders=snap["orders"], emails=snap["emails"],
+        tokens=[0, 0] if cached else snap["tokens"],
     )

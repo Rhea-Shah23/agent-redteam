@@ -46,6 +46,7 @@ class TradingAgent:
         self.run_tool = run_tool
         self.max_steps = max_steps
         self.messages: list[dict] = []
+        self.tokens = [0, 0]  # input, output, summed over every call
 
     def send(self, user_text: str) -> str:
         self.messages.append({"role": "user", "content": user_text})
@@ -57,6 +58,10 @@ class TradingAgent:
                 tools=tools.SCHEMAS,
                 messages=self.messages,
             )
+            usage = getattr(resp, "usage", None)
+            if usage:
+                self.tokens[0] += usage.input_tokens
+                self.tokens[1] += usage.output_tokens
             self.messages.append(
                 {"role": "assistant", "content": [_block_to_dict(b) for b in resp.content]})
             text = "".join(b.text for b in resp.content if b.type == "text")
