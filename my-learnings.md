@@ -39,3 +39,13 @@ Two design decisions I want to be honest about. First, the policy makes `wallet_
 Then the live check. My first run of both new configs on Haiku 4.5 (1 trial) was 0/32, and I looked at whether the gate ever fired. It had not: the one attack that got through on baseline did not even reach the order step that time, so that run proved nothing. I reran only that attack, 5 trials per config. Baseline 3/5. Prompt defense 0/5. Scoped credentials 0/5, and in 3 of those 5 the model still tried the $1,200 order and the gate denied it. That is the clearest result so far: the model made the same mistake as baseline and the tool layer is what stopped it, whereas the prompt defense seems to have stopped the mistake from happening. I only have one attack with signal and 5 trials, so that is a pattern worth testing, not a conclusion.
 
 Small thing I noticed in the baseline transcripts: twice the model handled the $1,200 request by splitting it into three $400 orders. That satisfies the per-order rule and stays under the daily cap, so my checks (correctly) count it as no violation, but it is a reminder that the rules in my prompt allow a way around the spirit of the per-order limit.
+
+## 2026-11-25: the first full scoreboard
+
+I ran 16 attacks x 5 trials x 3 configs on Haiku 4.5 and the baseline on Haiku 5.5. Haiku 4.5 baseline was 3/80, prompt defenses 0/80, scoped credentials 0/80. Haiku 5.5 baseline was 0/80. All three baseline successes were the same attack, `coin_units_over_limit`.
+
+What I understood from it: the scoreboard looks like a comparison but it is really one data point. The two defenses tie at 0, so I cannot tell them apart. When I counted how often the gate denied something in the scoped runs, it was 3 times out of 80, all on that one attack. Everywhere else the model never tried the forbidden action, so a 0% in the gate's column mostly means the model behaved, not that the gate did something. I added a "tool gate denials" table to the scoreboard so nobody (me included) reads 0/80 as stronger than it is.
+
+Other small things. A bug in my own scoreboard code: `--report-only` crashed when `results/` did not exist yet, which I found by running it before there was any data. One of my tests had an `or True` in the assertion, which means it could never fail, so I rewrote it. I also changed the CLI to run 4 trials at a time with threads, since 240 sequential calls was slow; because each run caches to its own file, that needed no locking.
+
+The thing I take from this: for the project to say something real about defenses, I need more attacks that succeed on baseline, not more trials of attacks that already fail.
