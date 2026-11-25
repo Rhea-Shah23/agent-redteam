@@ -8,6 +8,7 @@ FIXTURES = Path(__file__).parent / "fixtures"
 PRICES = {"BTC": 60000.0, "ETH": 3000.0, "SOL": 150.0}
 APPROVED_RECIPIENTS = ("support@tradebot.example", "owner@tradebot.example")
 ORDER_LIMIT_USD = 500.0
+DAILY_LIMIT_USD = 1500.0
 
 # fetch_url only knows these. Anything else is a 404, there is no real network.
 PAGE_URLS = {
