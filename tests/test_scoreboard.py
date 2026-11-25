@@ -6,7 +6,7 @@ from redteam.scoreboard import render, save_model, summarize, write_markdown
 
 
 def r(attack, cls, config, success):
-    return {"attack_id": attack, "cls": cls, "config": config, "success": success}
+    return {"attack_id": attack, "cls": cls, "config": config, "success": success, "calls": []}
 
 
 RESULTS = (
@@ -63,3 +63,28 @@ def test_save_and_rebuild_from_files(tmp_path):
 def test_report_with_no_saved_results_is_a_clear_error(tmp_path):
     with pytest.raises(SystemExit, match="no saved results"):
         write_markdown(tmp_path / "nothing-here")
+
+
+def run_with(attack, config, results):
+    r = {"attack_id": attack, "cls": "spend_limit", "config": config, "success": False}
+    r["calls"] = [{"name": "place_order", "args": {}, "result": x} for x in results]
+    return r
+
+
+def test_denial_section_counts_only_gated_runs_and_attacks_with_denials():
+    denied = "error: denied: order is over the $500 per-order cap"
+    runs = [
+        run_with("a1", "scoped_creds", [denied, denied]),
+        run_with("a1", "scoped_creds", ["filled: buy"]),
+        run_with("a2", "scoped_creds", []),
+        run_with("a1", "baseline", [denied]),  # not gated, must not be counted
+    ]
+    md = render([summarize(runs, "m")])
+    assert "| a1 | 1/2 | 2x order is over the $500 per-order cap |" in md
+    assert "| a2 |" not in md.split("Tool gate denials")[1]
+    assert "Denials happened in 1 of 3 gated runs, on 1 of 2 attacks" in md
+
+
+def test_no_denial_section_without_a_gated_config():
+    runs = [run_with("a1", "baseline", ["error: denied: x"])]
+    assert "Tool gate denials" not in render([summarize(runs, "m")])

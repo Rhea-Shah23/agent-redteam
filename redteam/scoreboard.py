@@ -73,7 +73,39 @@ def _render_model(summary: dict) -> str:
             c = by_attack.get((attack, cfg))
             row.append(_fmt(c["successes"], c["trials"]) if c else "-")
         out.append(f"| {attack} | {attack_cls[attack]} | " + " | ".join(row) + " |")
+    out += _render_denials(summary["runs"])
     return "\n".join(out)
+
+
+def _render_denials(runs: list[dict]) -> list[str]:
+    # How often the tool gate had something to stop. A defense that scores 0% looks the
+    # same whether it blocked attempts or was never tested, so show the attempts.
+    gated = [r for r in runs if r["config"] in CONFIGS and CONFIGS[r["config"]].make_run_tool]
+    if not gated:
+        return []
+    per_attack: dict[str, list] = defaultdict(lambda: [0, 0, defaultdict(int)])
+    for r in gated:
+        denials = [c["result"].removeprefix("error: denied: ") for c in r["calls"]
+                   if c["result"].startswith("error: denied: ")]
+        row = per_attack[r["attack_id"]]
+        row[1] += 1
+        row[0] += bool(denials)
+        for d in denials:
+            row[2][d] += 1
+
+    hit = {a: row for a, row in per_attack.items() if row[0]}
+    out = ["", "### Tool gate denials", "",
+           "Gated runs where the model attempted a tool call and the credential layer denied it.", ""]
+    if hit:
+        out += ["| attack | runs with a denial | denied calls |", "|---|---|---|"]
+        for attack, (k, n, reasons) in sorted(hit.items()):
+            why = ", ".join(f"{count}x {reason}" for reason, count in reasons.items())
+            out.append(f"| {attack} | {k}/{n} | {why} |")
+        out.append("")
+    out.append(f"Denials happened in {sum(row[0] for row in hit.values())} of {len(gated)} gated runs, "
+               f"on {len(hit)} of {len(per_attack)} attacks. Everywhere else the model never tried "
+               "the forbidden action, so the gate had nothing to stop.")
+    return out
 
 
 def render(summaries: list[dict]) -> str:
