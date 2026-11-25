@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from redteam.scoreboard import render, save_model, summarize, write_markdown
 
 
@@ -56,3 +58,8 @@ def test_save_and_rebuild_from_files(tmp_path):
     assert json.loads((tmp_path / "m1.json").read_text())["model"] == "m1"
     md = write_markdown(tmp_path).read_text()
     assert "## m1" in md and "## m2" in md
+
+
+def test_report_with_no_saved_results_is_a_clear_error(tmp_path):
+    with pytest.raises(SystemExit, match="no saved results"):
+        write_markdown(tmp_path / "nothing-here")

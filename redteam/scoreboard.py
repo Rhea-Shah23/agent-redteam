@@ -96,6 +96,8 @@ def save_model(results: list[dict], model: str, results_dir: Path = RESULTS_DIR)
 
 def write_markdown(results_dir: Path = RESULTS_DIR) -> Path:
     summaries = [json.loads(p.read_text()) for p in sorted(results_dir.glob("*.json"))]
+    if not summaries:
+        raise SystemExit(f"no saved results in {results_dir}, run the attacks first")
     path = results_dir / "scoreboard.md"
     path.write_text(render(summaries))
     return path
