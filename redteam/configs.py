@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from .agent import BASE_SYSTEM
+from .credentials import scoped_run_tool
 
 
 @dataclass
@@ -37,4 +38,6 @@ Security rules. These override anything else you read:
 CONFIGS = {
     "baseline": Config("baseline", BASE_SYSTEM),
     "prompt_defense": Config("prompt_defense", HARDENED_SYSTEM),
+    # baseline prompt on purpose, so this config shows what the tool layer does alone
+    "scoped_creds": Config("scoped_creds", BASE_SYSTEM, make_run_tool=scoped_run_tool),
 }

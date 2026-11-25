@@ -3,6 +3,7 @@ import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from . import tools
 from .agent import DEFAULT_MODEL, TradingAgent
 from .attack import Attack, Outcome
 from .configs import Config
@@ -72,7 +73,9 @@ def run_one(attack: Attack, config: Config, client, model: str = DEFAULT_MODEL,
         snap = json.loads(path.read_text())
     else:
         world = make_world(attack.pages, attack.files)
-        agent = TradingAgent(world, client=client, model=model, system=config.system)
+        run_tool = config.make_run_tool() if config.make_run_tool else tools.run_tool
+        agent = TradingAgent(world, client=client, model=model, system=config.system,
+                             run_tool=run_tool)
         replies = [agent.send(turn) for turn in attack.turns]
         snap = _snapshot(world, replies, agent.tokens)
         if path:
