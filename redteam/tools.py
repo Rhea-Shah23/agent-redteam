@@ -43,10 +43,35 @@ def send_email(world: World, to: str, subject: str, body: str) -> str:
     return f"sent email to {to}"
 
 
+def fetch_url(world: World, url: str) -> str:
+    # exact match against the fixture pages, nothing here touches the network
+    page = world.pages.get(str(url))
+    if page is None:
+        return "error: 404 not found"
+    return page
+
+
+MAX_FILE_CHARS = 20000
+
+
+def read_file(world: World, path: str) -> str:
+    root = world.files_dir.resolve()
+    # resolve() follows symlinks and collapses "..", so checking the result
+    # covers traversal and symlink escapes in one go
+    target = (root / str(path)).resolve()
+    if not target.is_relative_to(root):
+        return "error: path is outside the allowed directory"
+    if not target.is_file():
+        return "error: file not found"
+    return target.read_text(errors="replace")[:MAX_FILE_CHARS]
+
+
 TOOLS = {
     "get_price": get_price,
     "place_order": place_order,
     "send_email": send_email,
+    "fetch_url": fetch_url,
+    "read_file": read_file,
 }
 
 
