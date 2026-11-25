@@ -64,3 +64,14 @@ def test_custom_tool_runner_is_used():
     agent.send("buy")
     assert seen == ["place_order"]
     assert agent.world.orders == []
+
+
+def test_thinking_blocks_are_sent_back_unchanged():
+    from types import SimpleNamespace as NS
+    thinking = NS(type="thinking", thinking="", signature="sig123")
+    first = NS(stop_reason="tool_use", content=[
+        thinking, NS(type="tool_use", id="t1", name="get_price", input={"symbol": "BTC"})])
+    client = FakeClient([first, text_reply("ok")])
+    TradingAgent(make_world(), client=client).send("price?")
+    sent = client.requests[1]["messages"][1]["content"][0]
+    assert sent == {"type": "thinking", "thinking": "", "signature": "sig123"}

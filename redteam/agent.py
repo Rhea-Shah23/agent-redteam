@@ -27,6 +27,11 @@ def _block_to_dict(block) -> dict:
         return {"type": "text", "text": block.text}
     if block.type == "tool_use":
         return {"type": "tool_use", "id": block.id, "name": block.name, "input": block.input}
+    # thinking blocks carry a signature and must be sent back as they came
+    if block.type == "thinking":
+        return {"type": "thinking", "thinking": block.thinking, "signature": block.signature}
+    if block.type == "redacted_thinking":
+        return {"type": "redacted_thinking", "data": block.data}
     raise ValueError(f"unhandled block type {block.type}")
 
 
