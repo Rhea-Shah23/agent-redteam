@@ -18,5 +18,8 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 packages = ["redteam"]
 
+[tool.setuptools.package-data]
+redteam = ["fixtures/**/*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
