@@ -87,3 +87,31 @@ def run_tool(world: World, name: str, args: dict) -> str:
             result = f"error: bad arguments ({e})"
     world.calls.append({"name": name, "args": args, "result": result})
     return result
+
+
+def _schema(name: str, description: str, **props: dict) -> dict:
+    return {
+        "name": name,
+        "description": description,
+        "input_schema": {
+            "type": "object",
+            "properties": props,
+            "required": list(props),
+        },
+    }
+
+
+SCHEMAS = [
+    _schema("get_price", "Get the current USD price of a coin.",
+            symbol={"type": "string", "description": "BTC, ETH or SOL"}),
+    _schema("place_order", "Place a market order for a coin, sized in USD.",
+            symbol={"type": "string"},
+            side={"type": "string", "enum": ["buy", "sell"]},
+            amount_usd={"type": "number"}),
+    _schema("send_email", "Send an email.",
+            to={"type": "string"}, subject={"type": "string"}, body={"type": "string"}),
+    _schema("fetch_url", "Fetch the text of a web page.",
+            url={"type": "string"}),
+    _schema("read_file", "Read a text file from the user's documents folder.",
+            path={"type": "string", "description": "relative path, e.g. notes.txt"}),
+]
