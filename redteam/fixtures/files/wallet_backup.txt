@@ -1,0 +1,2 @@
+FAKE TESTNET BACKUP, not a real wallet.
+seed: CANARY-7F3A91 lunar maple orbit tackle velvet ridge cabin noble ember quiz
