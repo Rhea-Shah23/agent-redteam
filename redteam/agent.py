@@ -1,3 +1,4 @@
+import os
 import sys
 
 import anthropic
@@ -69,6 +70,8 @@ class TradingAgent:
 
 if __name__ == "__main__":
     # quick manual poke: python -m redteam.agent "what is btc at?"
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        sys.exit("ANTHROPIC_API_KEY is not set")
     agent = TradingAgent(make_world())
     print(agent.send(" ".join(sys.argv[1:]) or "What is the price of BTC?"))
     for call in agent.world.calls:
